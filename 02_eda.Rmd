@@ -1,0 +1,38 @@
+---
+title: "Exploratory data analyses"
+subtitle: "Data Science Capstone Project"
+author: Jan
+output: html_notebook
+---
+
+# 1. Load resources
+
+```{r echo=TRUE, results='hide'}
+library(tm)
+library(dplyr)
+```
+
+# 2. Setup analytics infrastructure
+```{r}
+us_texts <- Corpus(DirSource("Coursera-SwiftKey/final/en_US"),
+                  readerControl = list(reader=readPlain,
+                                       language="en_US",
+                                       load=TRUE))
+```
+
+# Preprocess the data
+```{r}
+us_preprocessed <- tm_map(us_texts, stripWhitespace)
+```
+
+
+# 3. Summarize the data
+```{r}
+summary(us_preprocessed[[1]])
+meta(us_preprocessed[[1]])
+```
+
+```{r}
+show(us_preprocessed[[1]])
+```
+
