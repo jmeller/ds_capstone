@@ -2,37 +2,170 @@
 title: "Exploratory data analyses"
 subtitle: "Data Science Capstone Project"
 author: Jan
-output: html_notebook
+output: 
+  html_notebook: 
+    number_sections: yes
 ---
 
-# 1. Load resources
-
-```{r echo=TRUE, results='hide'}
+```{r load_dependencies, message=FALSE, warning=FALSE, echo=False, results='hide'}
 library(tm)
 library(dplyr)
+library(parallel)
+library(SnowballC)
+library(ngram)
 ```
 
-# 2. Setup analytics infrastructure
+# Executive summary
+
+This report is part of the Coursera data science capstone project. I examine a subsample of the Swiftkey data set in concentrating on the US texts. I sampled \approx 10\% of the total texts that where given in the form of blog entries, tweets or news articles. After some first exploratory analyses, I will go on with my plan for the subsequent project.
+
+# Load data
+
+Here I sampled **100,000** rows from each of the three data sources that are US blogs, US tweets and US news articles.
+
+```{r data_loading, message=FALSE, warning=FALSE, results='hide'}
+# path to content
+fnames <- list.files("Coursera-SwiftKey/final/en_US", full.names = TRUE)
+
+fn_readfile <- function(fname, sampling=FALSE, n=1000){
+  con <- file(fname, "r") 
+  
+  result_list <- list()
+  
+  while(length(result_list) < n | !sampling) {
+    
+    if (sampling){
+      if(rbinom(1, 1, 0.5)){ # sample whether or not to consider this line for the text sample
+        nextline <-  readLines(con, 1, encoding="UTF-8", warn=F)
+        if(length(nextline) > 0){
+          result_list[length(result_list) + 1] <- nextline
+        } else {
+          break
+        }
+      }
+    } else {
+      nextline <-  readLines(con, 1, encoding="UTF-8", warn=F)
+      if(length(nextline) > 0){
+        result_list[length(result_list) + 1] <- nextline
+      } else {
+        break
+      }
+    }
+  }
+  
+  close(con) # close connection
+  return(result_list)
+}
+
+# subsampling
+us_texts_subsample <- lapply(fnames, fn_readfile, sampling=T, n=100000) %>% 
+  Reduce(f=append, x=.) %>% 
+  unlist %>%
+  VectorSource %>%
+  SimpleCorpus
+```
+```{r loading_full_texts, eval=FALSE, include=FALSE}
+full texts
+us_texts_vector <- lapply(fnames, fn_readfile, sampling=FALSE) %>% Reduce(f=append, x=.) %>% unlist
+us_texts <- SimpleCorpus(VectorSource(us_texts_vector))
+```
+
+# Processing
+
+Several preprocessing steps were performed. I chose to first transform all characters to lower case, then remove white spaces between words, numbers and punctuation as well as english stopwords.
+
+## Generic preprocessing steps
+```{r preprocessing, results='hide', message=FALSE, warning=FALSE, }
+# define stop words
+word_removal <- function(x) removeWords(x, stopwords("english"))
+
+preprocess_fns <- list(
+  stripWhitespace,
+  removeNumbers,
+  removePunctuation,
+  word_removal
+)
+
+us_preprocessed_subsample <- tm_map(us_texts_subsample, content_transformer(tolower)) %>%
+  tm_map(FUN = tm_reduce, tmFuns = preprocess_fns)
+```
+```{r processing_full_texts, eval=FALSE, include=FALSE}
+us_preprocessed <- tm_map(us_texts, content_transformer(tolower)) %>%
+  tm_map(FUN = tm_reduce, tmFuns = preprocess_fns)
+```
+
+## Document-term Matrix
 ```{r}
+dtm <- DocumentTermMatrix(us_preprocessed_subsample)
+inspect(dtm[101:110, 101:110])
+```
+```{r}
+dtm <- DocumentTermMatrix(us_preprocessed_subsample, control=list(wordLengths=c(4, 20), bounds = list(global = c(3,27))))
+print(dtm)
+```
+```{r}
+freq <- colSums(as.matrix(removeSparseTerms(dtm, 0.4)))
+ord <- order(freq,decreasing=TRUE)
+freq[head(ord)]
+```
+
+
+# Analysis of N-grams
+
+I used the ngram #rstats-package due to its good performance for large data sets. 
+
+```{r}
+strings <- concatenate(lapply(us_preprocessed_subsample, "[", 1))
+ng <- ngram(strings, n=3)
+```
+
+
+```{r}
+print(ng, output ="truncated")
+```
+```{r}
+get.phrasetable(ng)
+```
+
+
+
+
+
+
+# Setup analytics infrastructure
+```{r message=TRUE, warning=TRUE}
 us_texts <- Corpus(DirSource("Coursera-SwiftKey/final/en_US"),
-                  readerControl = list(reader=readPlain,
-                                       language="en_US",
-                                       load=TRUE))
+                   readerControl = list(reader=readPlain,
+                                        language="en_US",
+                                        load=TRUE))
 ```
 
 # Preprocess the data
-```{r}
+```{r message=TRUE, warning=TRUE}
 us_preprocessed <- tm_map(us_texts, stripWhitespace)
+us_preprocessed <- tm_map(us_preprocessed, content_transformer(tolower))
 ```
 
 
-# 3. Summarize the data
+# Summarize the data
 ```{r}
-summary(us_preprocessed[[1]])
+summary(us_preprocessed_final)
 meta(us_preprocessed[[1]])
 ```
 
 ```{r}
 show(us_preprocessed[[1]])
+```
+```{r}
+getTransformations()
+```
+
+# Create Document-term Matrix
+```{r}
+dtm <- DocumentTermMatrix(us_preprocessed)
+dtm
+```
+```{r}
+freq <- colSums(as.matrix(dtm))
 ```
 
