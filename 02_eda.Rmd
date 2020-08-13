@@ -1,5 +1,5 @@
 ---
-title: "Exploratory data analyses"
+title: "Week 2: Milestone Report"
 subtitle: "Data Science Capstone Project"
 author: Jan
 output: 
@@ -13,6 +13,7 @@ library(dplyr)
 library(parallel)
 library(SnowballC)
 library(ngram)
+library(tidyverse)
 ```
 
 # Executive summary
@@ -95,18 +96,30 @@ us_preprocessed <- tm_map(us_texts, content_transformer(tolower)) %>%
 ```
 
 ## Document-term Matrix
+
+In the next step, I generate the document-term matrix for words that are of length between 4 and 20 characters. 
 ```{r}
-dtm <- DocumentTermMatrix(us_preprocessed_subsample)
-inspect(dtm[101:110, 101:110])
+dtm <- DocumentTermMatrix(us_preprocessed_subsample, control=list(wordLengths=c(4, 20)))
 ```
-```{r}
-dtm <- DocumentTermMatrix(us_preprocessed_subsample, control=list(wordLengths=c(4, 20), bounds = list(global = c(3,27))))
-print(dtm)
+```{r filter_for_sparsity, echo=FALSE}
+sparsity_threshold <- 0.999
+freq <- colSums(as.matrix(removeSparseTerms(dtm, sparsity_threshold)))
 ```
+
+In total,there are ```r length(freq)``` items that are less sparse than ```r sparsity_threshold```, i.e., all of these words occur in at least ```r (1-sparsity_threshold)```% of the documents. 
+```{r plot_data, echo=FALSE}
+plot_data <- data.frame(term=names(freq),occurrences=freq)
+plot <- data.frame(term=names(freq),occurrences=freq) %>%
+  ggplot(aes(x=occurrences)) + geom_histogram() + theme_bw()
+plot
+```
+
+
 ```{r}
-freq <- colSums(as.matrix(removeSparseTerms(dtm, 0.4)))
+freq <- colSums(as.matrix(removeSparseTerms(dtm, 0.999)))
 ord <- order(freq,decreasing=TRUE)
-freq[head(ord)]
+freq[head(ord, n = 10)]
+freq[tail(ord, n = 10)]
 ```
 
 
@@ -126,46 +139,3 @@ print(ng, output ="truncated")
 ```{r}
 get.phrasetable(ng)
 ```
-
-
-
-
-
-
-# Setup analytics infrastructure
-```{r message=TRUE, warning=TRUE}
-us_texts <- Corpus(DirSource("Coursera-SwiftKey/final/en_US"),
-                   readerControl = list(reader=readPlain,
-                                        language="en_US",
-                                        load=TRUE))
-```
-
-# Preprocess the data
-```{r message=TRUE, warning=TRUE}
-us_preprocessed <- tm_map(us_texts, stripWhitespace)
-us_preprocessed <- tm_map(us_preprocessed, content_transformer(tolower))
-```
-
-
-# Summarize the data
-```{r}
-summary(us_preprocessed_final)
-meta(us_preprocessed[[1]])
-```
-
-```{r}
-show(us_preprocessed[[1]])
-```
-```{r}
-getTransformations()
-```
-
-# Create Document-term Matrix
-```{r}
-dtm <- DocumentTermMatrix(us_preprocessed)
-dtm
-```
-```{r}
-freq <- colSums(as.matrix(dtm))
-```
-
