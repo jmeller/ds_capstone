@@ -18,7 +18,7 @@ library(tidyverse)
 
 # Executive summary
 
-This report is part of the Coursera data science capstone project. I examine a subsample of the Swiftkey data set in concentrating on the US texts. I sampled \approx 10\% of the total texts that where given in the form of blog entries, tweets or news articles. After some first exploratory analyses, I will go on with my plan for the subsequent project.
+This report is part of the Coursera data science capstone project. I examine a subsample of the Swiftkey data set where I concentrate on the English texts. I sampled \approx 10\% of the total texts that where given in the form of blog entries, tweets or news articles. After generic preprocessing steps, a document-term matrix is generated. Also, I examined the combinations of single words and illustrated them by a first three-gram model.
 
 # Load data
 
@@ -66,7 +66,7 @@ us_texts_subsample <- lapply(fnames, fn_readfile, sampling=T, n=100000) %>%
   SimpleCorpus
 ```
 ```{r loading_full_texts, eval=FALSE, include=FALSE}
-full texts
+# full texts
 us_texts_vector <- lapply(fnames, fn_readfile, sampling=FALSE) %>% Reduce(f=append, x=.) %>% unlist
 us_texts <- SimpleCorpus(VectorSource(us_texts_vector))
 ```
@@ -104,23 +104,23 @@ dtm <- DocumentTermMatrix(us_preprocessed_subsample, control=list(wordLengths=c(
 ```{r filter_for_sparsity, echo=FALSE}
 sparsity_threshold <- 0.999
 freq <- colSums(as.matrix(removeSparseTerms(dtm, sparsity_threshold)))
+ord <- order(freq, decreasing=TRUE)
 ```
 
-In total,there are ```r length(freq)``` items that are less sparse than ```r sparsity_threshold```, i.e., all of these words occur in at least ```r (1-sparsity_threshold)```% of the documents. 
+In total,there are ```r length(freq)``` items that are less sparse than ```r sparsity_threshold```, i.e., all of these words occur in at least ```r (1-sparsity_threshold)*100```% of the documents. The following graph visualizes the number of occurences of terms that occur more than 5000 times in the corpus.
 ```{r plot_data, echo=FALSE}
 plot_data <- data.frame(term=names(freq),occurrences=freq)
-plot <- data.frame(term=names(freq),occurrences=freq) %>%
-  ggplot(aes(x=occurrences)) + geom_histogram() + theme_bw()
+plot <- data.frame(term=names(freq),occurrences=freq) %>% filter(occurrences > 5000) %>% 
+  ggplot(aes(x=reorder(term, -occurrences), y=occurrences)) + geom_bar(stat='identity') + theme_bw() + theme(axis.text.x=element_text(angle = 90, vjust = 0.5)) + labs(x='term', y='# of occurrences')
 plot
 ```
 
+In the following is a table of the 10 least frequently occurring terms in the corpus:
 
-```{r}
-freq <- colSums(as.matrix(removeSparseTerms(dtm, 0.999)))
-ord <- order(freq,decreasing=TRUE)
-freq[head(ord, n = 10)]
+```{r, echo=FALSE}
 freq[tail(ord, n = 10)]
 ```
+
 
 
 # Analysis of N-grams
@@ -128,14 +128,19 @@ freq[tail(ord, n = 10)]
 I used the ngram #rstats-package due to its good performance for large data sets. 
 
 ```{r}
+n <- 3
 strings <- concatenate(lapply(us_preprocessed_subsample, "[", 1))
-ng <- ngram(strings, n=3)
+ng <- ngram(strings, n=n)
 ```
 
 
-```{r}
+```{r, echo=FALSE, results='hide'}
 print(ng, output ="truncated")
 ```
-```{r}
+```{r echo=FALSE}
 get.phrasetable(ng)
 ```
+
+# Next steps
+
+In the upcoming weeks I plan on using the ngram package to further develop my prediction model. This will then be integrated into a shiny app which makes next word predictions on demand. For this reason, I will further focus only on the English language corpus. 

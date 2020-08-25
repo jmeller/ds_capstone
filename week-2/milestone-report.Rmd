@@ -1,0 +1,28 @@
+---
+title: "Week 2: Milestone Report"
+subtitle: "Data Science Capstone Project"
+author: Jan
+output: 
+  html_notebook: 
+    number_sections: yes
+---
+```{r load resources, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+source('02_analysis.R')
+```
+
+# Executive summary
+
+This report is part of the Coursera data science capstone project. Provided with a large corpus of text documents in the form of blog entries, tweets or news articles, the goal of this week's task is to perform first exploratory analyses and describe the further approach to build a next word prediction model. 
+
+Given the considerable size of the whole corpus, I analyse a subsample that covers \approx 10\% of the total English texts. As expected, I find that the distribution of words in the data set is heavily skewed. However, since the goal of this project is a next word prediction model, I decided to skip the default stopword removal preprocessing step. 
+
+In the upcoming weeks I plan to use the ...
+
+# Exploratory data analysis
+```{r echo=False}
+print(doc_overview)
+```
+
+# Additional findings
+
+# Next steps
