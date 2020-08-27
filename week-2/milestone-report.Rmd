@@ -7,6 +7,7 @@ output:
     number_sections: yes
 ---
 ```{r load resources, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+library(knitr)
 source('02_analysis.R')
 ```
 
@@ -14,13 +15,20 @@ source('02_analysis.R')
 
 This report is part of the Coursera data science capstone project. Provided with a large corpus of text documents in the form of blog entries, tweets or news articles, the goal of this week's task is to perform first exploratory analyses and describe the further approach to build a next word prediction model. 
 
-Given the considerable size of the whole corpus, I analyse a subsample that covers \approx 10\% of the total English texts. As expected, I find that the distribution of words in the data set is heavily skewed. However, since the goal of this project is a next word prediction model, I decided to preprocess the corpus without stopword removal. Moreover, I analysed the probability distribution of bigrams and trigrams within the corpus. Since the bigram model results in **higher** probabilities than the trigram model, I am planning to use the former. 
+Given the considerable size of the whole corpus, I analyse a subsample that covers \approx 10\% of the total English texts. As expected, I find that the distribution of words in the data set is heavily skewed. However, since the goal of this project is a next word prediction model, I decided to preprocess the corpus without stopword removal. Moreover, I analysed the probability distribution of bigrams and trigrams within the corpus. Not surprisingly, since the bigram model results in higher probabilities than the trigram model, I am planning to use the former for the word prediction model.
 
 In the upcoming weeks I plan to use the ...
 
 # Exploratory data analysis
-```{r echo=False}
-print(doc_overview)
+
+In my analysis, I focused on the English texts of the Swiftkey dataset which were provided as three single text documents containing lines of single contributions in the form of blog entries, news articles and tweets.
+```{r echo=False, results='asis'}
+kable(doc_overview, caption = "Overview on the data sources.", col.names = c('File name', 'No. of Documents'))
+```
+
+In total,there are ```r length(freq)``` words that occur in at least ```r (1-sparsity_threshold)*100```% of the documents. The following graph visualizes the number of occurences of terms that occur more than 15000 times in the corpus.
+```{r plot_data, echo=FALSE}
+plot_frequencies
 ```
 
 # Additional findings

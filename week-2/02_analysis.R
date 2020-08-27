@@ -61,18 +61,18 @@ word_removal <- function(x) removeWords(x, stopwords("english"))
 preprocess_fns <- list(
   stripWhitespace,
   removeNumbers,
-  removePunctuation,
+  removePunctuation #,
   # word_removal
 )
 
 us_preprocessed_subsample <- tm_map(us_texts_subsample, content_transformer(tolower)) %>%
   tm_map(FUN = tm_reduce, tmFuns = preprocess_fns)
 
-us_preprocessed <- tm_map(us_texts, content_transformer(tolower)) %>%
-  tm_map(FUN = tm_reduce, tmFuns = preprocess_fns)
+# us_preprocessed <- tm_map(us_texts, content_transformer(tolower)) %>%
+#   tm_map(FUN = tm_reduce, tmFuns = preprocess_fns)
 
 # document-term matrix
-dtm <- DocumentTermMatrix(us_preprocessed_subsample, control=list(wordLengths=c(4, 20)))
+dtm <- DocumentTermMatrix(us_preprocessed_subsample, control=list(wordLengths=c(-1, 20)))
 
 sparsity_threshold <- 0.999
 freq <- colSums(as.matrix(removeSparseTerms(dtm, sparsity_threshold)))
@@ -86,20 +86,20 @@ doc_overview <- data.frame(file=fnames, no_docs=lengths(us_texts_list))
 
 # histograms
 plot_data <- data.frame(term=names(freq),occurrences=freq)
-plot <- data.frame(term=names(freq),occurrences=freq) %>% filter(occurrences > 5000) %>% 
+plot_frequencies <- data.frame(term=names(freq),occurrences=freq) %>% filter(occurrences > 15000) %>% 
   ggplot(aes(x=reorder(term, -occurrences), y=occurrences)) + geom_bar(stat='identity') + theme_bw() + theme(axis.text.x=element_text(angle = 90, vjust = 0.5)) + labs(x='term', y='# of occurrences')
-plot
+plot_frequencies
 
-freq[tail(ord, n = 10)]
+least_frequent <- freq[tail(ord, n = 10)]
 
 # n-grams
 n <- 3
 strings <- concatenate(lapply(us_preprocessed_subsample, "[", 1))
 ng <- ngram(strings, n=n)
+# get.phrasetable(ng)
 
-print(ng, output ="truncated")
-
-get.phrasetable(ng)
+bigram <- ngram(strings, n=2)
+# get.phrasetable(bigram)
 
 
 
