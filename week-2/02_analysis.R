@@ -5,6 +5,7 @@ library(parallel)
 library(SnowballC)
 library(ngram)
 library(tidyverse)
+library(wordcloud)
 
 # Data loading ------------------------------------------------------------
 
@@ -96,13 +97,13 @@ least_frequent <- freq[tail(ord, n = 10)]
 n <- 3
 strings <- concatenate(lapply(us_preprocessed_subsample, "[", 1))
 ng <- ngram(strings, n=n)
-# get.phrasetable(ng)
+ng_phrases <- get.phrasetable(ng)
 
 bigram <- ngram(strings, n=2)
-# get.phrasetable(bigram)
+bg_phrases <- get.phrasetable(bigram)
 
 
 
 # Playground --------------------------------------------------------------
 
-print(us_texts)
+
