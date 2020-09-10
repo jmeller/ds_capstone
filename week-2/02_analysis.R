@@ -94,14 +94,19 @@ plot_frequencies
 least_frequent <- freq[tail(ord, n = 10)]
 
 # n-grams
-n <- 3
 strings <- concatenate(lapply(us_preprocessed_subsample, "[", 1))
-ng <- ngram(strings, n=n)
-ng_phrases <- get.phrasetable(ng)
+
+fg <- ngram(strings, n=4)
+fg_phrases <- get.phrasetable(fg)
+
+tg <- ngram(strings, n=3)
+tg_phrases <- get.phrasetable(tg)
 
 bigram <- ngram(strings, n=2)
 bg_phrases <- get.phrasetable(bigram)
 
+unigram <- ngram(strings, n=1)
+ug_phrases <- get.phrasetable(unigram)
 
 
 # Playground --------------------------------------------------------------
