@@ -7,7 +7,33 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 library(tm)
 library(quanteda)
 library(dplyr)
-source('../week-2/02_analysis.R')
+library(tidyverse)
+library(data.table)
+#source('../week-2/02_analysis.R')
+
+# get the term frequencies of ngrams
+new_corpus <- corpus(us_texts)
+set.seed(2608)
+new_sample <- corpus_sample(new_corpus, size=length(new_corpus)*0.1)
+
+word_frequencies <- new_sample %>% dfm %>% featfreq
+bigram_frequencies <- new_sample %>% tokens %>% tokens_ngrams(2) %>% dfm %>% featfreq
+trigram_frequencies <- new_sample %>% tokens %>% tokens_ngrams(3) %>% dfm %>% featfreq
+fourgram_frequencies <- new_sample %>% tokens %>% tokens_ngrams(4) %>% dfm %>% featfreq
+
+word_dt = data.table(term=names(word_frequencies), freq=word_frequencies)
+bigram_dt = data.table(term=names(bigram_frequencies), freq=bigram_frequencies)
+trigram_dt = data.table(term=names(trigram_frequencies), freq=trigram_frequencies)
+fourgram_dt = data.table(term=names(fourgram_frequencies), freq=fourgram_frequencies)
+
+# TO-DO: need input tokenizer + logic first
+
+base_freq <- bigram_dt %>% filter(str_detect(term, "^i_can't$")) %>% select(freq) %>% unlist
+bigram_dt %>% filter(str_starts(term, "i_")) %>% arrange(desc(freq))
+test <- trigram_dt %>% filter(str_starts(term, "i_can't_")) %>% arrange(desc(freq)) %>% head(3) %>% data.table %>% .[,prob := freq/base_freq]
+print(test)
+
+
 
 # implement tokenizer
 x <- "I can't"
@@ -20,16 +46,7 @@ wf <- word_frequencies[unigrams %>% unlist() %>% tail(1)]
 prob <- bf/wf
 prob
 
-# get the term frequencies of ngrams
-new_corpus <- corpus(us_texts)
-set.seed(2608)
-new_sample <- corpus_sample(new_corpus, size=length(new_corpus)*0.1)
 
-word_frequencies <- new_sample %>% dfm %>% featfreq
-bigram_frequencies <- new_sample %>% tokens %>% tokens_ngrams(2) %>% dfm %>% featfreq
-
-bigram_dfm <- new_sample %>% tokens %>% tokens_ngrams(2) %>% dfm
-bigram_dfm
 
 first <- unigrams %>% unlist %>% head(1)
 search_string <- paste0('^', unigrams %>% unlist %>% head(1), '_')
