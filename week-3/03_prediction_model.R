@@ -28,6 +28,17 @@ fourgram_dt = data.table(term=names(fourgram_frequencies), freq=fourgram_frequen
 
 # TO-DO: need input tokenizer + logic first
 
+input_string <- "I can't wait"
+input_tokens <- tokens(input_string) %>% tokens_tolower %>% unlist
+n_tokens <- input_tokens %>% length %>% min(3) # trim number of tokens due to maximum of fourgrams pre-saved
+
+search_string <- input_tokens %>% tail(n_tokens) %>% list %>% tokens %>% tokens_ngrams(n_tokens) %>% unlist
+search_string <- paste0("^", search_string, "$")
+
+# TO-DO choose ngram depending on token length
+base_freq <- trigram_dt %>% filter(str_detect(term, search_string)) %>% select(freq) %>% unlist
+
+
 base_freq <- bigram_dt %>% filter(str_detect(term, "^i_can't$")) %>% select(freq) %>% unlist
 bigram_dt %>% filter(str_starts(term, "i_")) %>% arrange(desc(freq))
 test <- trigram_dt %>% filter(str_starts(term, "i_can't_")) %>% arrange(desc(freq)) %>% head(3) %>% data.table %>% .[,prob := freq/base_freq]
