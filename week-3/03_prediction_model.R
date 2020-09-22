@@ -32,17 +32,28 @@ input_string <- "I can't wait"
 input_tokens <- tokens(input_string) %>% tokens_tolower %>% unlist
 n_tokens <- input_tokens %>% length %>% min(3) # trim number of tokens due to maximum of fourgrams pre-saved
 
-search_string <- input_tokens %>% tail(n_tokens) %>% list %>% tokens %>% tokens_ngrams(n_tokens) %>% unlist
-search_string <- paste0("^", search_string, "$")
+search_tokens <- input_tokens %>% tail(n_tokens) %>% list %>% tokens %>% tokens_ngrams(n_tokens) %>% unlist
+search_string <- paste0("^", search_tokens, "$")
 
 # TO-DO choose ngram depending on token length
-base_freq <- trigram_dt %>% filter(str_detect(term, search_string)) %>% select(freq) %>% unlist
+if (n_tokens == 3) {
+  base_ngram <- trigram_dt
+  pred_ngram <- fourgram_dt
+} else if (n_tokens == 2) {
+  base_ngram <- bigram_dt
+  pred_ngram <- trigram_dt
+} else {
+  base_ngram <- word_dt
+  pred_ngram <- bigram_dt
+}
+
+# no of top predictions
+n_words <- 3
+base_freq <- base_ngram %>% filter(str_detect(term, search_string)) %>% select(freq) %>% unlist
+pred_freq <- pred_ngram %>% filter(str_starts(term, paste0("^", search_tokens, "_"))) %>% arrange(desc(freq)) %>% head(n_words) %>% data.table %>% .[,prob := freq/base_freq]
+print(pred_freq)
 
 
-base_freq <- bigram_dt %>% filter(str_detect(term, "^i_can't$")) %>% select(freq) %>% unlist
-bigram_dt %>% filter(str_starts(term, "i_")) %>% arrange(desc(freq))
-test <- trigram_dt %>% filter(str_starts(term, "i_can't_")) %>% arrange(desc(freq)) %>% head(3) %>% data.table %>% .[,prob := freq/base_freq]
-print(test)
 
 
 
